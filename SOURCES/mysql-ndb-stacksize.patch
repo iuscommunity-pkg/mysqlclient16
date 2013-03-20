@@ -1,0 +1,31 @@
+Raise minimum stack size in ndb code to be a uniform 32K (64K on 64-bit
+platforms).  This is in response to an episode where glibc needed 8K of
+stack to run malloc(), resulting in ndbd crashing at launch.  While that
+was acknowledged to be a glibc bug (see bz #494631), byte-shaving here
+isn't any better an idea than it is in the main mysql server.
+
+Note: the request gets rounded up to at least PTHREAD_STACK_MIN, which
+is 128K on PPC; otherwise we would need to do something about including
+the stack guard size explicitly, since it's so much larger on PPC than
+elsewhere.  At some point we might want to use our my_setstacksize()
+hack in NdbThread_Create().
+
+
+diff -Naur mysql-5.1.39.orig/storage/ndb/src/kernel/blocks/ndbfs/AsyncFile.cpp mysql-5.1.39/storage/ndb/src/kernel/blocks/ndbfs/AsyncFile.cpp
+--- mysql-5.1.39.orig/storage/ndb/src/kernel/blocks/ndbfs/AsyncFile.cpp	2009-09-04 12:21:19.000000000 -0400
++++ mysql-5.1.39/storage/ndb/src/kernel/blocks/ndbfs/AsyncFile.cpp	2009-09-21 22:33:08.000000000 -0400
+@@ -106,13 +106,8 @@
+ AsyncFile::doStart() 
+ {
+   // Stacksize for filesystem threads
+-#if !defined(DBUG_OFF) && defined (__hpux)
+-  // Empirical evidence indicates at least 32k
++  // don't make this too small
+   const NDB_THREAD_STACKSIZE stackSize = 32768;
+-#else
+-  // Otherwise an 8k stack should be enough
+-  const NDB_THREAD_STACKSIZE stackSize = 8192;
+-#endif
+ 
+   char buf[16];
+   numAsyncFiles++;

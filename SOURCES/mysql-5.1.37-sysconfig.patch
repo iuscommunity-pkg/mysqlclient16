@@ -1,0 +1,13 @@
+--- mysql-5.1.37/support-files/mysql.server.sh.orig	2009-07-13 18:12:38.000000000 -0500
++++ mysql-5.1.37/support-files/mysql.server.sh	2009-08-06 13:00:44.000000000 -0500
+@@ -53,6 +53,10 @@
+ # Negative numbers mean to wait indefinitely
+ service_startup_timeout=900
+ 
++if [ -e '/etc/sysconfig/mysqld' ]; then
++    . /etc/sysconfig/mysqld
++fi
++
+ # The following variables are only set for letting mysql.server find things.
+ 
+ # Set some defaults

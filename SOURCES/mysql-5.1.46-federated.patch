@@ -1,0 +1,71 @@
+http://bugs.mysql.com/bug.php?id=40942
+
+=== added file 'mysql-test/include/have_federated_plugin.inc'
+--- a/mysql-test/include/have_federated_plugin.inc	1970-01-01 00:00:00 +0000
++++ b/mysql-test/include/have_federated_plugin.inc	2010-04-21 09:10:01 +0000
+@@ -0,0 +1,5 @@
++if (`select plugin_library IS NULL from information_schema.plugins where plugin_name LIKE '%federated%'`)
++{
++  --skip federated plugin not available
++}
++
+
+=== added file 'mysql-test/suite/federated/federated_plugin-master.opt'
+--- a/mysql-test/suite/federated/federated_plugin-master.opt	1970-01-01 00:00:00 +0000
++++ b/mysql-test/suite/federated/federated_plugin-master.opt	2010-04-21 09:10:01 +0000
+@@ -0,0 +1,2 @@
++--plugin_dir=../storage/federated/.libs
++
+
+=== added file 'mysql-test/suite/federated/federated_plugin.result'
+
+=== added file 'mysql-test/suite/federated/federated_plugin.test'
+--- a/mysql-test/suite/federated/federated_plugin.test	1970-01-01 00:00:00 +0000
++++ b/mysql-test/suite/federated/federated_plugin.test	2010-04-21 09:10:01 +0000
+@@ -0,0 +1,22 @@
++--source include/not_windows.inc
++--source include/have_federated_plugin.inc
++
++CREATE TABLE t1(a int) ENGINE=FEDERATED;
++DROP TABLE t1;
++
++INSTALL PLUGIN federated SONAME 'ha_federated.so';
++--error 1125
++INSTALL PLUGIN FEDERATED SONAME 'ha_federated.so';
++
++UNINSTALL PLUGIN federated;
++
++INSTALL PLUGIN federated SONAME 'ha_federated.so';
++
++CREATE TABLE t1(a int) ENGINE=FEDERATED;
++
++DROP TABLE t1;
++
++UNINSTALL PLUGIN federated;
++--error ER_SP_DOES_NOT_EXIST
++UNINSTALL PLUGIN federated;
++
+
+
+--- mysql-5.1.46/storage/federated/Makefile.am.federated	2010-04-06 09:07:07.000000000 -0500
++++ mysql-5.1.46/storage/federated/Makefile.am	2010-05-17 14:31:21.238437473 -0500
+@@ -1,5 +1,5 @@
+-# Copyright (C) 2006 MySQL AB
+-#
++# Copyright (C) 2005-2006 MySQL AB, 2009 Sun Microsystems, Inc.
++# All rights reserved.
+ # This program is free software; you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+ # the Free Software Foundation; version 2 of the License.
+@@ -48,5 +48,10 @@
+ 
+ 
+ EXTRA_DIST =		CMakeLists.txt plug.in
+-# Don't update the files from bitkeeper
++
++ha_federated_la_LIBADD =	probes_sh_mysql.o
++ha_federated_la_DEPENDENCIES =		probes_sh_mysql.o 
++
++ Don't update the files from bitkeeper
+ %::SCCS/s.%
++

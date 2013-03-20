@@ -1,0 +1,9 @@
+--- mysql-5.1.56/mysql-test/t/disabled.def.orig	2011-03-07 10:25:08.000000000 -0600
++++ mysql-5.1.56/mysql-test/t/disabled.def	2011-03-07 10:25:38.000000000 -0600
+@@ -11,5 +11,6 @@
+ ##############################################################################
+ kill                     : Bug#37780 2008-12-03 HHunger need some changes to be robust enough for pushbuild.
+ query_cache_28249        : Bug#43861 2009-03-25 main.query_cache_28249 fails sporadically
++main.ssl_8k_key          : bug#56342 2010-08-28 ssl_8k_key test fails with openssl
+ log_tables-big           : Bug#48646 2010-11-15 mattiasj report already exists
+ read_many_rows_innodb    : Bug#37635 2010-11-15 mattiasj report already exists

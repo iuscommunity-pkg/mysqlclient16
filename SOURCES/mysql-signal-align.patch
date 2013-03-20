@@ -1,0 +1,38 @@
+Fix a bit of silliness; the original coding not only computes the required
+size of the temp variable incorrectly, but doesn't guarantee the correct
+alignment.  This demonstrably leads to ndbd crashing at launch on sparc64,
+and is probably bad news for performance on other 64-bit machines even
+if they don't give an actual SIGBUS.
+
+Filed upstream at http://bugs.mysql.com/bug.php?id=48132
+
+
+diff -Naur mysql-5.1.39.orig/storage/ndb/src/kernel/blocks/dbtup/DbtupRoutines.cpp mysql-5.1.39/storage/ndb/src/kernel/blocks/dbtup/DbtupRoutines.cpp
+--- mysql-5.1.39.orig/storage/ndb/src/kernel/blocks/dbtup/DbtupRoutines.cpp	2009-09-04 12:21:18.000000000 -0400
++++ mysql-5.1.39/storage/ndb/src/kernel/blocks/dbtup/DbtupRoutines.cpp	2009-10-17 14:24:56.000000000 -0400
+@@ -1144,8 +1144,9 @@
+                    KeyReqStruct *req_struct,
+                    Uint32* outBuffer)
+ {
+-  Uint32 tmp[sizeof(SignalHeader)+25];
+-  Signal * signal = (Signal*)&tmp;
++  SignalT<25> signalT;
++  Signal *signal= (Signal*)&signalT;
++
+   switch(attrId){
+   case AttributeHeader::FRAGMENT:
+     * outBuffer = fragptr.p->fragmentId;
+diff -Naur mysql-5.1.39.orig/storage/ndb/src/kernel/blocks/ndbfs/AsyncFile.cpp mysql-5.1.39/storage/ndb/src/kernel/blocks/ndbfs/AsyncFile.cpp
+--- mysql-5.1.39.orig/storage/ndb/src/kernel/blocks/ndbfs/AsyncFile.cpp	2009-09-04 12:21:19.000000000 -0400
++++ mysql-5.1.39/storage/ndb/src/kernel/blocks/ndbfs/AsyncFile.cpp	2009-10-17 14:26:21.000000000 -0400
+@@ -529,8 +529,8 @@
+   {
+     off_t off = 0;
+     const off_t sz = request->par.open.file_size;
+-    Uint32 tmp[sizeof(SignalHeader)+25];
+-    Signal * signal = (Signal*)(&tmp[0]);
++    SignalT<25> signalT;
++    Signal *signal= (Signal*)&signalT;
+     FsReadWriteReq* req = (FsReadWriteReq*)signal->getDataPtrSend();
+ 
+     Uint32 index = 0;

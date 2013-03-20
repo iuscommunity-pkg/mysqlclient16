@@ -1,0 +1,7 @@
+--- mysql-5.1.50/mysql-test/t/disabled.def.orig 2010-08-03 12:53:51.000000000 -0500
++++ mysql-5.1.50/mysql-test/t/disabled.def      2010-09-13 11:44:24.243096631 -0500
+@@ -14,3 +14,4 @@
+ partition_innodb_plugin  : Bug#53307 2010-04-30 VasilDimov valgrind warnings
+ main.mysqlhotcopy_myisam : bug#54129 2010-06-04 Horst
+ main.mysqlhotcopy_archive: bug#54129 2010-06-04 Horst
++main.ssl_8k_key          : bug#56342 2010-08-28 ssl_8k_key test fails with openssl
