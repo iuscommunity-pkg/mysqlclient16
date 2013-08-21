@@ -32,7 +32,7 @@
 
 Name: mysqlclient16
 Version: 5.1.61
-Release: 1.ius%{?dist}
+Release: 2.ius%{?dist}
 Summary: Backlevel MySQL shared libraries.
 License: GPL
 Group: Applications/Databases
@@ -78,6 +78,8 @@ Patch315: mysql-5.1.37-sysconfig.patch
 Patch316: mysql-5.1.61-disabled_tests.patch
 # https://bugs.launchpad.net/ius/+bug/942524
 Patch317: mysql-strmov.patch 
+#update FSF address
+Patch500: mysql.m4.patch
 
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
@@ -163,6 +165,7 @@ developing MySQL applications using backlevel client libraries.
 %patch315 -p1 -b .sysconfig
 %patch316 -p1 -b .disabled_tests
 %patch317 -p1 -b .strmov
+%patch500 -p1
 
 ## Work around for missing mkinstalldirs 
 #if [ ! -e mkinstalldirs ]; then
@@ -314,6 +317,9 @@ fi
 %{_includedir}/mysql/*.h
 
 %changelog
+* Wed Aug 21 2013 Ben Harper <ben.harper@rackspace.com> - 5.1.61-2.ius
+- Patch500 added to match changes in mysql55
+
 * Tue Mar 06 2012 Jeffrey Ness <jeffrey.ness@rackspace.com> - 5.1.61-1.ius
 - Latest sources from upstream
 - Adding patch mysql-strmov.patch to address

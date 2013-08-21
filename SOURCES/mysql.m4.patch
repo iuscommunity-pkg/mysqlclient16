@@ -1,0 +1,13 @@
+--- mysql-5.1.61/support-files/mysql.m4	2011-12-16 13:06:08.000000000 -0600
++++ mysql-5.1.61/support-files/mysql.m4.updated	2013-08-21 10:28:14.976656539 -0500
+@@ -10,8 +10,8 @@
+ # for more details.
+ #
+ # You should have received a copy of the GNU General Public License along
+-# with this program; if not, write to the Free Software Foundation, Inc., 59
+-# Temple Place, Suite 330, Boston, MA  02111-1307  USA
++# with this program; if not, write to the Free Software Foundation, Inc., 51
++# Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ 
+ AC_DEFUN([_MYSQL_CONFIG],[
+   AC_ARG_WITH([mysql-config],
