@@ -32,13 +32,13 @@
 
 Name: mysqlclient16
 Version: 5.1.61
-Release: 2.ius%{?dist}
+Release: 3.ius%{?dist}
 Summary: Backlevel MySQL shared libraries.
 License: GPL
 Group: Applications/Databases
 URL: http://www.mysql.com
 
-Source0: http://dev.mysql.com/get/Downloads/MySQL-4.1/mysql-%{version}.tar.gz
+Source0: http://dev.mysql.com/get/Downloads/MySQL-5.1/mysql-%{version}.tar.gz
 Source4: scriptstub.c
 Source5: my_config.h
 
@@ -207,7 +207,6 @@ export CFLAGS CXXFLAGS
 	--with-ssl \
 	--without-debug \
 	--enable-shared \
-	--without-bench \
 	--localstatedir=/var/lib/mysql \
 	--with-unix-socket-path=/var/lib/mysql/mysql.sock \
 	--with-mysqld-user="mysql" \
@@ -270,6 +269,7 @@ rm -f %{buildroot}%{_origlibdir}/mysql5/mysql/libmysqlclient.so
 rm -f %{buildroot}%{_origlibdir}/mysql5/mysql/libmysqlclient_r.so
 rm -f %{buildroot}%{_origlibdir}/mysql5/mysql/libndbclient.so
 rm -f %{buildroot}%{_origlibdir}/mysql5/mysql/libndbclient.so.3
+rm -rf %{buildroot}%{_prefix}/sql-bench/
 
 mkdir -p %{buildroot}/etc/ld.so.conf.d
 echo "%{_origlibdir}/mysql" > %{buildroot}/etc/ld.so.conf.d/%{name}-%{_arch}.conf
@@ -308,7 +308,6 @@ fi
 %{_origlibdir}/mysql/libmysqlclient*16*
 %{_origlibdir}/mysql5/mysql/libmysqlclient*16*
 %{_origlibdir}/mysql5/mysql/mysql_config
-%{_prefix}/sql-bench/
 %{_datarootdir}/aclocal/mysql.m4
 /etc/ld.so.conf.d/mysqlclient16-*.conf 
 
@@ -317,6 +316,9 @@ fi
 %{_includedir}/mysql/*.h
 
 %changelog
+* Tue Dec 03 2013 Ben Harper <ben.harper@rackspace.com> - 5.1.61-3.ius
+- remove sql-bench files, see LP bug 1257465
+
 * Wed Aug 21 2013 Ben Harper <ben.harper@rackspace.com> - 5.1.61-2.ius
 - Patch500 added to match changes in mysql55
 
