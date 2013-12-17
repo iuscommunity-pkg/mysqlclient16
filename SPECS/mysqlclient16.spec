@@ -1,38 +1,7 @@
-# Setting initial dist defaults.  Do not modify these.
-# Note: Mock sets these up... but we need to default for manual builds.
-%{!?el3:%define el3 0}
-%{!?el4:%define el4 0}
-%{!?el5:%define el5 0}
-%{!?rhel:%define rhel 'empty'}
-
-# Build Options
-#
-# In order to properly build you will likely need to add one of the following
-# build options:
-#
-#       --with el3
-#       --with el4
-#       --with el5
-#
-#
-# Note for maintainers/builders: mock handles all these defs.  We include them 
-# here for manual builds.
-#
-%{?_with_el3:%define el3 1}
-%{?_with_el3:%define rhel 3}
-%{?_with_el3:%define dist .el3}
-
-%{?_with_el4:%define el4 1}
-%{?_with_el4:%define rhel 4}
-%{?_with_el4:%define dist .el4}
-
-%{?_with_el5:%define el5 1}
-%{?_with_el5:%define rhel 5}
-%{?_with_el5:%define dist .el5}
 
 Name: mysqlclient16
 Version: 5.1.61
-Release: 3.ius%{?dist}
+Release: 4.ius%{?dist}
 Summary: Backlevel MySQL shared libraries.
 License: GPL
 Group: Applications/Databases
@@ -83,25 +52,13 @@ Patch500: mysql.m4.patch
 
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
-Prereq: /sbin/ldconfig, /sbin/install-info, grep, fileutils, chkconfig
+Requires(pre): /sbin/ldconfig, /sbin/install-info, grep, fileutils, chkconfig
 BuildRequires: gperf, perl, readline-devel, openssl-devel
 BuildRequires: gcc-c++, ncurses-devel, zlib-devel
 BuildRequires: libtool automake autoconf gcc
 Requires: bash
 Provides: libmysqlclient.so.16   libmysqlclient.so.16.0.0 
 Provides: libmysqlclient_r.so.16 libmysqlclient_r.so.16.0.0
-
-%if %{el5}
-BuildRequires: libpcap
-Requires: libpcap
-%endif
-
-%if %{el3}
-BuildRequires: gettext
-%else
-BuildRequires: gettext-devel
-%endif
-
 
 # Working around perl dependency checking bug in rpm FTTB. Remove later.
 %define __perl_requires %{SOURCE999}
@@ -177,21 +134,12 @@ libtoolize --force
 aclocal
 automake
 
-# This is a hack to fix autoconf issues on Rhel3
-%if %{el3}
-echo "ifdef([m4_pattern_allow], [m4_pattern_allow([AS_HELP_STRING])])" >> aclocal.m4
-%endif
-
 autoconf
 autoheader
 
 %build
 CFLAGS="%{optflags} -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE"
-%if %{el3}
-CFLAGS="$CFLAGS -fno-strict-aliasing"
-%else
 CFLAGS="$CFLAGS -fno-strict-aliasing -fwrapv"
-%endif
 
 # Also Resolved MySQL Bug: #18091 and #19999
 # same as MySQL builds... always build as
@@ -219,7 +167,8 @@ export CFLAGS CXXFLAGS
 	--with-federated-storage-engine \
 	--with-blackhole-storage-engine \
 	--with-csv-storage-engine \
-	--with-named-thread-libs="-lpthread"
+	--with-named-thread-libs="-lpthread" \
+        --without-server
 
 gcc $CFLAGS $LDFLAGS -o scriptstub "-DLIBDIR=\"%{_libdir}/mysql\"" %{SOURCE4}
 
@@ -233,11 +182,6 @@ rm -rf %{buildroot}
 
 install -m 644 include/my_config.h %{buildroot}%{_includedir}/mysql/my_config_`uname -i`.h
 install -m 644 %{SOURCE5} %{buildroot}%{_includedir}/mysql/
-
-mv %{buildroot}%{_bindir}/mysqlbug %{buildroot}%{_libdir}/mysql/mysqlbug
-install -m 0755 scriptstub %{buildroot}%{_bindir}/mysqlbug
-mv %{buildroot}%{_bindir}/mysql_config %{buildroot}%{_libdir}/mysql/mysql_config
-install -m 0755 scriptstub %{buildroot}%{_bindir}/mysql_config
 
 # We want the .so files both in regular _libdir (for execution) and
 # in special _libdir/mysql5 directory (for convenient building of clients).
@@ -253,9 +197,6 @@ ln -s ../../mysql/libmysqlclient.so.16.*.* .
 ln -s ../../mysql/libmysqlclient_r.so.16.*.* .
 popd
 
-# Put the config script into special libdir
-cp -p %{buildroot}%{_bindir}/mysql_config %{buildroot}%{_libdir}/mysql
-
 rm -rf %{buildroot}%{_prefix}/mysql-test
 rm -f %{buildroot}%{_libdir}/mysql/*.a
 rm -f %{buildroot}%{_libdir}/mysql/*.la
@@ -270,6 +211,7 @@ rm -f %{buildroot}%{_origlibdir}/mysql5/mysql/libmysqlclient_r.so
 rm -f %{buildroot}%{_origlibdir}/mysql5/mysql/libndbclient.so
 rm -f %{buildroot}%{_origlibdir}/mysql5/mysql/libndbclient.so.3
 rm -rf %{buildroot}%{_prefix}/sql-bench/
+rm -f %{buildroot}%{_datadir}/aclocal/mysql.m4
 
 mkdir -p %{buildroot}/etc/ld.so.conf.d
 echo "%{_origlibdir}/mysql" > %{buildroot}/etc/ld.so.conf.d/%{name}-%{_arch}.conf
@@ -278,37 +220,19 @@ echo "%{_origlibdir}/mysql" > %{buildroot}/etc/ld.so.conf.d/%{name}-%{_arch}.con
 rm -rf %{buildroot}
 
 %post 
-%if %{el3}
-  if ! grep '^%{_libdir}/mysql$' /etc/ld.so.conf > /dev/null 2>&1
-  then
-    echo "%{_libdir}/mysql" >> /etc/ld.so.conf
-  fi
-%endif
 /sbin/ldconfig
 
 
 %postun
 if [ $1 = 0 ] ; then
-  %if %{el3}
-    if grep '^%{_libdir}/mysql$' /etc/ld.so.conf > /dev/null 2>&1
-    then
-        grep -v '^%{_libdir}/mysql$' /etc/ld.so.conf \
-            > /etc/ld.so.conf.$$ 2> /dev/null
-        mv /etc/ld.so.conf.$$ /etc/ld.so.conf
-    fi
-  %endif
   /sbin/ldconfig
 fi
 
 %files
 %defattr(-,root,root)
 %doc README COPYING
-%{_origlibdir}/mysql5/mysql/mysqlbug
-%{_origlibdir}/mysql5/mysql/plugin
 %{_origlibdir}/mysql/libmysqlclient*16*
 %{_origlibdir}/mysql5/mysql/libmysqlclient*16*
-%{_origlibdir}/mysql5/mysql/mysql_config
-%{_datarootdir}/aclocal/mysql.m4
 /etc/ld.so.conf.d/mysqlclient16-*.conf 
 
 %files devel
@@ -316,6 +240,10 @@ fi
 %{_includedir}/mysql/*.h
 
 %changelog
+* Mon Dec 16 2013 Ben Harper <ben.harper@rackspace.com> - 5.1.61-4.ius
+- cleaning up more unneeded files
+- removing if statements for older OSes
+
 * Tue Dec 03 2013 Ben Harper <ben.harper@rackspace.com> - 5.1.61-3.ius
 - remove sql-bench files, see LP bug 1257465
 
